@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DIVYA-DATA | Cosmic Transit Tracker</title>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --blush: #FCE7F3;
+            --lilac: #EDE9FE;
+            --sky: #E0F2FE;
+            --cream: #FFFDF9;
+            --text: #4C4E6E;
+            --accent-grad: linear-gradient(135deg, #EDE9FE 0%, #E0F2FE 100%);
+            --cta-grad: linear-gradient(135deg, #A78BFA 0%, #60A5FA 100%);
+            --glass: rgba(255, 255, 255, 0.6);
+            --shadow: 0 8px 32px 0 rgba(167, 139, 250, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--cream);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, var(--blush) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, var(--sky) 0%, transparent 40%);
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header Styling */
+        header {
+            text-align: center;
+            padding: 40px 0;
+            animation: fadeInDown 1s ease-out;
+        }
+
+        .logo {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: 4px;
+            background: var(--cta-grad);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .tagline {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #8E94B2;
+        }
+
+        /* Hero Form Section */
+        .glass-card {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+            transition: transform 0.3s ease;
+        }
+
+        .input-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #6D728E;
+        }
+
+        input {
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid #E2E8F0;
+            background: white;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            border-color: #A78BFA;
+        }
+
+        .btn-calculate {
+            grid-column: 1 / -1;
+            background: var(--cta-grad);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 14px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(96, 165, 250, 0.3);
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .btn-calculate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(96, 165, 250, 0.4);
+        }
+
+        /* Results Display */
+        #results-container {
+            display: none;
+            animation: fadeInUp 0.8s ease-out forwards;
+        }
+
+        .grid-layout {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        /* Energy Meter */
+        .energy-section {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .energy-meter {
+            width: 180px;
+            height: 180px;
+            margin: 0 auto 20px;
+            position: relative;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            box-shadow: inset 0 0 20px var(--lilac);
+        }
+
+        .energy-glow {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            filter: blur(20px);
+            opacity: 0.4;
+            z-index: -1;
+        }
+
+        .energy-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--text);
+        }
+
+        /* Aspect Table */
+        .aspect-list {
+            list-style: none;
+        }
+
+        .aspect-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            font-size: 0.95rem;
+        }
+
+        .aspect-item:last-child { border: none; }
+
+        .aspect-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--blush);
+            color: #DB2777;
+        }
+
+        /* Alerts */
+        .mercury-alert {
+            background: #FEF2F2;
+            border: 1px solid #FECACA;
+            color: #991B1B;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            font-weight: 600;
+        }
+
+        .retro-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            background: #F1F5F9;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            margin-left: 8px;
+            color: #64748B;
+        }
+
+        /* Animation */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--cream);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--blush);
+            border-top: 5px solid var(--cta-grad);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px;
+            color: #B2B7D0;
+            font-size: 0.8rem;
+        }
+
+        /* Responsive Tweaks */
+        @media (max-width: 600px) {
+            .container { padding: 15px; }
+            .logo { font-size: 1.5rem; }
+            .glass-card { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="loading-overlay" id="loader">
+        <div class="spinner"></div>
+        <p style="margin-top: 20px; color: #8E94B2;">Consulting the stars...</p>
+    </div>
+
+    <div class="container">
+        <header>
+            <div class="logo">DIVYA-DATA</div>
+            <div class="tagline">Real-Time Cosmic Intelligence</div>
+        </header>
+
+        <section class="glass-card">
+            <h2 style="font-size: 1.2rem; margin-bottom: 10px;">Calculate Your Transits</h2>
+            <p style="font-size: 0.9rem; color: #8E94B2;">Enter your birth details to see how the current sky affects your energy.</p>
+            
+            <form id="transit-form">
+                <div class="input-group">
+                    <div class="field">
+                        <label>Birth Date</label>
+                        <input type="date" id="birthDate" required>
+                    </div>
+                    <div class="field">
+                        <label>Birth Time</label>
+                        <input type="time" id="birthTime" value="12:00">
+                    </div>
+                    <button type="submit" class="btn-calculate">Sync with the Universe</button>
+                </div>
+            </form>
+        </section>
+
+        <div id="results-container">
+            <!-- Mercury Retrograde Alert -->
+            <div id="mercury-alert-box"></div>
+
+            <div class="grid-layout">
+                <!-- Energy Score -->
+                <div class="glass-card energy-section">
+                    <h3>Emotional Intensity</h3>
+                    <div class="energy-meter">
+                        <div class="energy-glow" id="glow-bg"></div>
+                        <span class="energy-value" id="intensity-score">0</span>
+                    </div>
+                    <p id="intensity-desc" style="font-size: 0.9rem; color: #6D728E;"></p>
+                </div>
+
+                <!-- Transit Chart -->
+                <div class="glass-card">
+                    <h3>Transit Strengths</h3>
+                    <div style="height: 250px; margin-top: 20px;">
+                        <canvas id="strengthChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Aspects -->
+            <div class="glass-card" style="margin-top: 20px;">
+                <h3>Active Personal Aspects</h3>
+                <div id="aspect-list-container" class="aspect-list" style="margin-top: 20px;">
+                    <!-- Aspects populated here -->
+                </div>
+            </div>
+
+            <!-- Planet States -->
+            <div class="grid-layout" style="margin-top: 20px;">
+                <div class="glass-card">
+                    <h3>Current Sky</h3>
+                    <div id="transit-positions" class="aspect-list"></div>
+                </div>
+                <div class="glass-card">
+                    <h3>Interpretation</h3>
+                    <p id="cosmic-summary" style="line-height: 1.6; font-size: 0.95rem;"></p>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            &copy; 2024 DIVYA-DATA | Built for the New Age
+        </footer>
+    </div>
+
+    <script>
+        /**
+         * ASTROLOGICAL CONSTANTS & CALCULATIONS (Simplified VSOP87 Approximation)
+         */
+        const PLANETS = [
+            { name: "Sun", speed: 0.9856, color: "#FDE68A" },
+            { name: "Moon", speed: 13.176, color: "#E0F2FE" },
+            { name: "Mercury", speed: 1.141, color: "#C7D2FE" },
+            { name: "Venus", speed: 1.602, color: "#FCE7F3" },
+            { name: "Mars", speed: 0.524, color: "#FECACA" },
+            { name: "Jupiter", speed: 0.083, color: "#EDE9FE" },
+            { name: "Saturn", speed: 0.033, color: "#CBD5E1" }
+        ];
+
+        const ZODIAC = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
+
+        const ASPECT_TYPES = [
+            { name: "Conjunction", angle: 0, orb: 8, intensity: 10, icon: "☌", desc: "A powerful fusion of energies." },
+            { name: "Opposition", angle: 180, orb: 8, intensity: 8, icon: "☍", desc: "A call for balance and tension." },
+            { name: "Square", angle: 90, orb: 6, intensity: 9, icon: "□", desc: "Dynamic challenges and friction." },
+            { name: "Trine", angle: 120, orb: 6, intensity: 7, icon: "△", desc: "Harmonious flow of talent." }
+        ];
+
+        let chartInstance = null;
+
+        // Simple Julian Date calculation
+        function getJD(date) {
+            return (date.getTime() / 86400000) - (date.getTimezoneOffset() / 1440) + 2440587.5;
+        }
+
+        // Simplified planetary longitude calculation (Approximate for display)
+        function calculateLongitude(jd, planetIndex) {
+            const planet = PLANETS[planetIndex];
+            // Epoch J2000 approximate positions
+            const basePositions = [280.46, 218.32, 252.25, 181.98, 355.45, 34.35, 50.07];
+            const daysSinceJ2000 = jd - 2451545.0;
+            let long = (basePositions[planetIndex] + (planet.speed * daysSinceJ2000)) % 360;
+            if (long < 0) long += 360;
+            return long;
+        }
+
+        function getSign(long) {
+            return ZODIAC[Math.floor(long / 30)];
+        }
+
+        function checkRetrograde(planetName) {
+            // Simplified: Mercury is often retrograde (~3 times a year)
+            // Logic: Periodic simulation based on average cycle
+            const now = new Date();
+            const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
+            
+            if (planetName === "Mercury") {
+                // Approximate Mercury cycles for 2024-2025
+                const ranges = [[92, 115], [218, 241], [330, 350]];
+                return ranges.some(r => dayOfYear >= r[0] && dayOfYear <= r[1]);
+            }
+            if (planetName === "Mars") return dayOfYear > 340 || dayOfYear < 15;
+            return false;
+        }
+
+        // Logic to detect aspects between two longitudes
+        function getAspect(long1, long2) {
+            const diff = Math.abs(long1 - long2);
+            const normalizedDiff = diff > 180 ? 360 - diff : diff;
+
+            for (const aspect of ASPECT_TYPES) {
+                if (Math.abs(normalizedDiff - aspect.angle) <= aspect.orb) {
+                    return aspect;
+                }
+            }
+            return null;
+        }
+
+        // Form Submission
+        document.getElementById('transit-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const birthDateVal = document.getElementById('birthDate').value;
+            const birthTimeVal = document.getElementById('birthTime').value;
+            
+            if (!birthDateVal) return;
+
+            // Show Loader
+            document.getElementById('loader').style.display = 'flex';
+
+            setTimeout(() => {
+                const birthDate = new Date(`${birthDateVal}T${birthTimeVal}`);
+                const currentDate = new Date();
+                
+                processAstrology(birthDate, currentDate);
+                
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('results-container').style.display = 'block';
+            }, 1200);
+        });
+
+        function processAstrology(birthDate, currentDate) {
+            const birthJD = getJD(birthDate);
+            const currentJD = getJD(currentDate);
+
+            const natalPositions = PLANETS.map((p, i) => calculateLongitude(birthJD, i));
+            const transitPositions = PLANETS.map((p, i) => calculateLongitude(currentJD, i));
+
+            // 1. Detect Aspects
+            const activeAspects = [];
+            let totalIntensity = 0;
+
+            PLANETS.forEach((tp, ti) => {
+                PLANETS.forEach((np, ni) => {
+                    const aspect = getAspect(transitPositions[ti], natalPositions[ni]);
+                    if (aspect) {
+                        activeAspects.push({
+                            transitPlanet: tp.name,
+                            natalPlanet: np.name,
+                            aspect: aspect
+                        });
+                        totalIntensity += aspect.intensity;
+                    }
+                });
+            });
+
+            // Normalize intensity 0-100
+            const finalScore = Math.min(100, Math.round((totalIntensity / (activeAspects.length || 1)) * 10));
+            updateUI(activeAspects, finalScore, transitPositions);
+        }
+
+        function updateUI(aspects, score, transits) {
+            // Update Intensity
+            const scoreEl = document.getElementById('intensity-score');
+            const descEl = document.getElementById('intensity-desc');
+            const glowEl = document.getElementById('glow-bg');
+            
+            scoreEl.innerText = score;
+            
+            if (score > 70) {
+                descEl.innerText = "High Cosmic Voltage: Intense shifts are happening.";
+                glowEl.style.background = "#FECACA";
+            } else if (score > 40) {
+                descEl.innerText = "Balanced Flow: Productive alignment.";
+                glowEl.style.background = "#EDE9FE";
+            } else {
+                descEl.innerText = "Quiet Skies: Minimal external pressure.";
+                glowEl.style.background = "#E0F2FE";
+            }
+
+            // Mercury Retrograde Alert
+            const mercRetro = checkRetrograde("Mercury");
+            const alertBox = document.getElementById('mercury-alert-box');
+            if (mercRetro) {
+                alertBox.innerHTML = `
+                    <div class="mercury-alert">
+                        <span style="font-size: 1.5rem; margin-right:15px;">⚠️</span>
+                        Mercury is in Retrograde. Double-check your texts and expect delays in DIVYA-DATA streams.
+                    </div>
+                `;
+            } else {
+                alertBox.innerHTML = '';
+            }
+
+            // Aspect List
+            const list = document.getElementById('aspect-list-container');
+            list.innerHTML = aspects.length ? '' : '<p style="color:#8E94B2">No major aspects detected today.</p>';
+            
+            aspects.forEach(a => {
+                const item = document.createElement('div');
+                item.className = 'aspect-item';
+                item.innerHTML = `
+                    <div class="aspect-icon">${a.aspect.icon}</div>
+                    <div style="flex:1">
+                        <strong>${a.transitPlanet} ${a.aspect.name} Natal ${a.natalPlanet}</strong>
+                        <div style="font-size:0.75rem; color:#8E94B2">${a.aspect.desc}</div>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+
+            // Current Positions
+            const posList = document.getElementById('transit-positions');
+            posList.innerHTML = '';
+            PLANETS.forEach((p, i) => {
+                const isRetro = checkRetrograde(p.name);
+                const item = document.createElement('div');
+                item.className = 'aspect-item';
+                item.innerHTML = `
+                    <div style="width:10px; height:10px; border-radius:50%; background:${p.color}; margin-right:15px;"></div>
+                    <div style="flex:1">
+                        ${p.name} in ${getSign(transits[i])}
+                        ${isRetro ? '<span class="retro-badge">Retrograde</span>' : ''}
+                    </div>
+                `;
+                posList.appendChild(item);
+            });
+
+            // Generate Cosmic Summary
+            const summary = document.getElementById('cosmic-summary');
+            if (aspects.length > 0) {
+                const topAspect = aspects[0];
+                summary.innerText = `Today, your chart is primarily influenced by the ${topAspect.transitPlanet} forming a ${topAspect.aspect.name} with your birth ${topAspect.natalPlanet}. This indicates a phase of ${topAspect.aspect.desc.toLowerCase()} Focus on your emotional reactions and let the ${getSign(transits[0])} sun guide your clarity.`;
+            } else {
+                summary.innerText = "The current transits are moving through empty sectors of your natal chart. This is a perfect 'blank slate' period to set new intentions without heavy planetary interference.";
+            }
+
+            // Chart
+            updateChart(aspects);
+        }
+
+        function updateChart(aspects) {
+            const ctx = document.getElementById('strengthChart').getContext('2d');
+            
+            // Aggregated scores per planet
+            const labels = PLANETS.map(p => p.name);
+            const data = PLANETS.map(p => {
+                return aspects
+                    .filter(a => a.transitPlanet === p.name)
+                    .reduce((sum, current) => sum + current.aspect.intensity, 2); // Base 2 for visibility
+            });
+
+            if (chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Transit Pull',
+                        data: data,
+                        backgroundColor: PLANETS.map(p => p.color),
+                        borderRadius: 8,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { display: false }, ticks: { display: false } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
